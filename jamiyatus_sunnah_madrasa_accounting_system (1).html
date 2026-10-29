@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>জামিয়াতুস সুন্নাহ আদর্শ মহিলা মাদরাসা - হিসাব-নিকাশ ও ক্যাশবই</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans Bengali & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6.4.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            850: '#064e3b',
+                            950: '#022c22',
+                        },
+                        amber: {
+                            450: '#f59e0b',
+                        }
+                    },
+                    fontFamily: {
+                        bengali: ['Noto Sans Bengali', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans Bengali', 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .gold-accent {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        /* Print Media Styling for A4 Cashbook Report */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 12pt;
+            }
+            #cashbookPrintableArea {
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            @page {
+                size: A4 portrait;
+                margin: 12mm;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-bengali antialiased">
+
+    <!-- Login Modal Overlay -->
+    <div id="loginModal" class="fixed inset-0 bg-emerald-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-emerald-100">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 gold-accent text-white rounded-2xl shadow-lg flex items-center justify-center font-bold text-3xl mx-auto mb-3">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h2 class="text-xl font-extrabold text-gray-800">মাদরাসা হিসাব সিস্টেম লগইন</h2>
+                <p class="text-xs text-gray-500 mt-1">জামিয়াতুস সুন্নাহ আদর্শ মহিলা মাদরাসা</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">ইউজারনেম</label>
+                    <input type="text" id="loginUsername" placeholder="ইউজারনেম লিখুন (ডিফল্ট: admin)" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">পাসওয়ার্ড</label>
+                    <input type="password" id="loginPassword" placeholder="পাসওয়ার্ড লিখুন (ডিফল্ট: 123456)" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                </div>
+                <div id="loginError" class="text-xs text-rose-600 font-bold hidden text-center"></div>
+                <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold py-3 rounded-xl text-sm transition shadow-lg">
+                    প্যানেলে প্রবেশ করুন
+                </button>
+            </form>
+            <div class="mt-4 text-center text-[11px] text-gray-400">
+                ডিফল্ট লগইন: <span class="font-bold text-emerald-800">admin</span> / পাসওয়ার্ড: <span class="font-bold text-emerald-800">123456</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="no-print bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 text-white shadow-xl sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 gold-accent text-white rounded-2xl shadow-lg flex items-center justify-center font-bold text-2xl border border-amber-300/40">
+                    <i class="fa-solid fa-mosque"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-amber-100">
+                        জামিয়াতুস সুন্নাহ আদর্শ মহিলা মাদরাসা
+                    </h1>
+                    <p class="text-xs text-emerald-200/90 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-location-dot text-amber-400"></i> রুহিতপুর, কেরাণীগঞ্জ, ঢাকা
+                    </p>
+                </div>
+            </div>
+
+            <!-- Action Buttons & Role Switcher -->
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex bg-emerald-950/80 px-3 py-1.5 rounded-xl border border-emerald-700/60 shadow-inner items-center gap-2 text-xs">
+                    <span class="text-emerald-300 font-medium">রোল:</span>
+                    <select id="roleSelector" onchange="changeRole(this.value)" class="bg-transparent font-bold focus:outline-none text-amber-300 cursor-pointer">
+                        <option value="Admin" class="bg-gray-900 text-white">মুহতামিম / অ্যাডমিন</option>
+                        <option value="Cashier" class="bg-gray-900 text-white">ক্যাশিয়ার</option>
+                        <option value="Viewer" class="bg-gray-900 text-white">পরিদর্শক (Viewer)</option>
+                    </select>
+                </div>
+                <button onclick="handleLogout()" class="bg-rose-700 hover:bg-rose-800 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1">
+                    <i class="fa-solid fa-right-from-bracket"></i> লগআউট
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Navigation Tabs Bar -->
+        <div class="no-print flex flex-wrap border-b border-gray-200 mb-6 bg-white rounded-2xl p-2 shadow-sm gap-2">
+            <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 bg-emerald-800 text-white shadow-md">
+                <i class="fa-solid fa-chart-line"></i> ড্যাশবোর্ড
+            </button>
+            <button onclick="switchTab('entry')" id="tab-entry" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-800">
+                <i class="fa-solid fa-circle-plus"></i> জমা/খরচ এন্ট্রি
+            </button>
+            <button onclick="switchTab('cashbook')" id="tab-cashbook" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-800">
+                <i class="fa-solid fa-book-bookmark"></i> প্রথাগত ক্যাশবই
+            </button>
+            <button onclick="switchTab('categories')" id="tab-categories" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-800">
+                <i class="fa-solid fa-tags"></i> খাত ব্যবস্থাপনা
+            </button>
+            <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-800">
+                <i class="fa-solid fa-gear"></i> সিকিউরিটি সেটিংস
+            </button>
+        </div>
+
+        <!-- Alert Notification Box -->
+        <div id="alertBox" class="hidden mb-6 p-4 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-sm"></div>
+
+        <!-- ==================== TAB 1: DASHBOARD ==================== -->
+        <section id="sec-dashboard" class="space-y-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Total Income -->
+                <div class="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 text-7xl"><i class="fa-solid fa-vault"></i></div>
+                    <p class="text-xs text-emerald-100 font-medium">মোট আয় (আমদ)</p>
+                    <h3 id="dashTotalIncome" class="text-2xl sm:text-3xl font-black mt-2">৳০</h3>
+                    <p class="text-[11px] text-emerald-200/90 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up text-amber-300"></i> সর্বমোট সংগৃহীত ফান্ড
+                    </p>
+                </div>
+
+                <!-- Total Expense -->
+                <div class="bg-gradient-to-br from-rose-600 to-rose-800 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 text-7xl"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                    <p class="text-xs text-rose-100 font-medium">মোট খরচ (রপ্ত)</p>
+                    <h3 id="dashTotalExpense" class="text-2xl sm:text-3xl font-black mt-2">৳০</h3>
+                    <p class="text-[11px] text-rose-200/90 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-down"></i> সর্বমোট ব্যয়কৃত অর্থ
+                    </p>
+                </div>
+
+                <!-- Net Cash Balance -->
+                <div class="bg-gradient-to-br from-blue-700 to-indigo-900 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 text-7xl"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <p class="text-xs text-blue-100 font-medium">বর্তমান অবশিষ্ট জের (ক্যাশ স্থিতি)</p>
+                    <h3 id="dashNetBalance" class="text-2xl sm:text-3xl font-black mt-2 text-amber-300">৳০</h3>
+                    <p class="text-[11px] text-blue-200/90 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-wallet text-amber-400"></i> হাতে অবশিষ্ট তহবিল
+                    </p>
+                </div>
+
+                <!-- Entry Count -->
+                <div class="bg-gradient-to-br from-amber-500 to-amber-700 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 text-7xl"><i class="fa-solid fa-receipt"></i></div>
+                    <p class="text-xs text-amber-100 font-medium">মোট লেনদেন এন্ট্রি</p>
+                    <h3 id="dashTotalCount" class="text-2xl sm:text-3xl font-black mt-2">০টি</h3>
+                    <p class="text-[11px] text-amber-100/90 mt-2 flex items-center gap-1">
+                        <i class="fa-solid fa-database"></i> রেজিস্ট্রিকৃত ভাউচার
+                    </p>
+                </div>
+            </div>
+
+            <!-- Dashboard Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Bar Chart -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm lg:col-span-2">
+                    <h3 class="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">
+                        <span class="w-2.5 h-6 bg-emerald-700 rounded-full inline-block"></span>
+                        আয় ও ব্যয়ের তুলনামূলক পর্যালোচনা
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="incomeVsExpenseChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Doughnut Chart -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm">
+                    <h3 class="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">
+                        <span class="w-2.5 h-6 bg-rose-600 rounded-full inline-block"></span>
+                        ব্যয়ের প্রধান খাতসমূহ
+                    </h3>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="expenseCategoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Entries List -->
+            <div class="glass-card rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                    <h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-emerald-700"></i> সাম্প্রতিক ৫টি লেনদেন
+                    </h3>
+                    <button onclick="switchTab('cashbook')" class="text-emerald-700 font-bold text-xs hover:underline flex items-center gap-1">
+                        পূর্ণাঙ্গ ক্যাশবই দেখুন <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-100/80 text-gray-700 font-bold uppercase border-b border-gray-200">
+                            <tr>
+                                <th class="p-3.5">তারিখ</th>
+                                <th class="p-3.5">ধরন</th>
+                                <th class="p-3.5">খাত ও বিবরণ</th>
+                                <th class="p-3.5">পেমেন্ট মাধ্যম</th>
+                                <th class="p-3.5 text-right">পরিমাণ (টাকা)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashRecentTable" class="divide-y divide-gray-100">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: INCOME / EXPENSE ENTRY ==================== -->
+        <section id="sec-entry" class="hidden">
+            <div class="max-w-2xl mx-auto glass-card p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200">
+                <h2 class="text-xl font-extrabold text-gray-800 mb-6 flex items-center gap-2.5 pb-4 border-b border-gray-200">
+                    <i class="fa-solid fa-pen-to-square text-emerald-700"></i> নতুন হিসাব / ভাউচার তৈরি করুন
+                </h2>
+
+                <form id="entryForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                    <!-- Type Selection -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-2">লেনদেনের ধরন *</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="entryType" value="income" checked onchange="updateCategoryDatalist()" class="peer hidden">
+                                <div class="p-3.5 text-center border-2 rounded-xl peer-checked:border-emerald-600 peer-checked:bg-emerald-50 text-gray-600 peer-checked:text-emerald-900 font-extrabold text-sm transition shadow-sm">
+                                    <i class="fa-solid fa-circle-down text-emerald-600 mr-1.5"></i> আমদ (জমা/আয়)
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="entryType" value="expense" onchange="updateCategoryDatalist()" class="peer hidden">
+                                <div class="p-3.5 text-center border-2 rounded-xl peer-checked:border-rose-600 peer-checked:bg-rose-50 text-gray-600 peer-checked:text-rose-900 font-extrabold text-sm transition shadow-sm">
+                                    <i class="fa-solid fa-circle-up text-rose-600 mr-1.5"></i> রপ্ত (খরচ/ব্যয়)
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Category Input -->
+                    <div>
+                        <label for="entryCategory" class="block text-xs font-bold text-gray-700 mb-1">খাত / ক্যাটাগরি *</label>
+                        <input type="text" id="entryCategory" list="categoryDatalist" placeholder="খাতের নাম নির্বাচন করুন অথবা নতুন টাইপ করুন" required class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                        <datalist id="categoryDatalist"></datalist>
+                    </div>
+
+                    <!-- Amount Input -->
+                    <div>
+                        <label for="entryAmount" class="block text-xs font-bold text-gray-700 mb-1">টাকার পরিমাণ (বাংলা বা ইংরেজি সংখ্যা) *</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-500 font-bold text-base">৳</span>
+                            <input type="text" id="entryAmount" placeholder="যেমন: 5000 বা ৫০০০" required class="w-full pl-9 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div>
+                        <label for="entryDate" class="block text-xs font-bold text-gray-700 mb-1">তারিখ</label>
+                        <div class="flex flex-wrap sm:flex-nowrap gap-2">
+                            <input type="date" id="entryDate" class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                            <button type="button" onclick="setQuickDate('today')" class="px-3.5 py-2 bg-emerald-100 text-emerald-900 rounded-xl text-xs font-bold hover:bg-emerald-200 transition">আজ</button>
+                            <button type="button" onclick="setQuickDate('yesterday')" class="px-3.5 py-2 bg-gray-100 text-gray-700 rounded-xl text-xs font-bold hover:bg-gray-200 transition">গতকাল</button>
+                        </div>
+                    </div>
+
+                    <!-- Regularity Tag -->
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">খাতের প্রকৃতি (বাজেট ট্যাগ)</label>
+                        <div class="flex items-center gap-6 mt-1">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="isRegular" value="true" checked class="text-emerald-700 focus:ring-emerald-600 w-4 h-4">
+                                <span class="ml-2 text-xs text-gray-700 font-semibold">নিয়মিত বাজেট</span>
+                            </label>
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="radio" name="isRegular" value="false" class="text-emerald-700 focus:ring-emerald-600 w-4 h-4">
+                                <span class="ml-2 text-xs text-gray-700 font-semibold">অনিয়মিত / বিশেষ অনুদান/খরচ</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div>
+                        <label for="entryPaymentMethod" class="block text-xs font-bold text-gray-700 mb-1">পেমেন্ট মাধ্যম</label>
+                        <select id="entryPaymentMethod" onchange="toggleCustomMethod(this.value)" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                            <option value="নগদ (Cash Hand)">নগদ (Cash Hand)</option>
+                            <option value="ব্যাংক একাউন্ট">ব্যাংক একাউন্ট (Bank Transfer)</option>
+                            <option value="বিকাশ / নগদ">বিকাশ / নগদ (Mobile Banking)</option>
+                            <option value="custom">অন্যান্য মাধ্যম...</option>
+                        </select>
+                        <input type="text" id="customPaymentMethod" placeholder="পেমেন্ট মাধ্যমের বিবরণ লিখুন" class="hidden mt-2 w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="entryDesc" class="block text-xs font-bold text-gray-700 mb-1">বিবরণ / রসিদ নম্বর (ঐচ্ছিক)</label>
+                        <textarea id="entryDesc" rows="2" placeholder="প্রয়োজনীয় মন্তব্য বা ভাউচার নম্বর লিখুন" class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"></textarea>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitEntryBtn" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold py-3 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> হিসাব জমা করুন
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: CASHBOOK REPORT ==================== -->
+        <section id="sec-cashbook" class="hidden space-y-6">
+            <!-- Filter & Print Controls -->
+            <div class="no-print bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        <label class="block text-xs text-gray-500 font-bold mb-1">শুরু তারিখ</label>
+                        <input type="date" id="reportStartDate" class="border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 font-bold mb-1">শেষ তারিখ</label>
+                        <input type="date" id="reportEndDate" class="border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:ring-2 focus:ring-emerald-600">
+                    </div>
+                    <button onclick="renderCashbookReport()" class="mt-5 bg-emerald-800 hover:bg-emerald-900 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-filter mr-1"></i> ফিল্টার
+                    </button>
+                    <button onclick="resetReportFilter()" class="mt-5 border border-gray-300 hover:bg-gray-100 text-gray-600 px-3 py-1.5 rounded-xl text-xs font-bold transition">
+                        রিসেট
+                    </button>
+                </div>
+
+                <!-- Export Buttons -->
+                <div class="flex items-center gap-2">
+                    <button onclick="exportCashbookPDF()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-extrabold transition shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-pdf"></i> PDF / প্রিন্ট
+                    </button>
+                    <button onclick="exportCashbookWord()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-extrabold transition shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-word"></i> MS Word ডক
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Two-Column Cashbook -->
+            <div id="cashbookPrintableArea" class="bg-white p-6 sm:p-10 rounded-2xl shadow-sm border border-emerald-100 max-w-5xl mx-auto">
+                <!-- Letterhead -->
+                <div class="text-center mb-6 pb-4 border-b-2 border-emerald-900/20">
+                    <p class="text-xs font-serif text-gray-600 mb-1">বিসমিল্লাহির রহমানির রহিম</p>
+                    <h1 class="text-2xl sm:text-3xl font-black text-emerald-950">জামিয়াতুস সুন্নাহ আদর্শ মহিলা মাদরাসা</h1>
+                    <p class="text-xs text-gray-600 font-semibold mt-0.5">রুহিতপুর, কেরাণীগঞ্জ, ঢাকা</p>
+                    <p class="text-xs text-emerald-800 font-bold mt-2 underline decoration-emerald-500 underline-offset-4">দৈনিক ক্যাশবই হিসাব বিবরণী</p>
+                    <div class="mt-2 inline-block bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs px-3 py-1 rounded-full font-bold" id="reportDateRangeText">
+                        তারিখ: --
+                    </div>
+                </div>
+
+                <!-- Cashbook Layout Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Income Side -->
+                    <div class="border-2 rounded-xl overflow-hidden border-emerald-700">
+                        <div class="bg-emerald-800 text-white font-black text-center py-2 text-xs uppercase tracking-wider">
+                            আমদ (জমা / প্রাপ্তি)
+                        </div>
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-emerald-50 text-emerald-950 border-b border-emerald-200 font-bold">
+                                <tr>
+                                    <th class="p-2 w-20">তারিখ</th>
+                                    <th class="p-2">খাত ও বিবরণ</th>
+                                    <th class="p-2 w-16">টাইপ</th>
+                                    <th class="p-2 text-right w-24">টাকা</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportIncomeTableBody"></tbody>
+                            <tfoot class="bg-emerald-100/80 font-bold border-t border-emerald-300">
+                                <tr>
+                                    <td colspan="3" class="p-2 text-right">মোট আমদ:</td>
+                                    <td id="reportTotalIncome" class="p-2 text-right text-emerald-900">৳০</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- Expense Side -->
+                    <div class="border-2 rounded-xl overflow-hidden border-rose-700">
+                        <div class="bg-rose-800 text-white font-black text-center py-2 text-xs uppercase tracking-wider">
+                            রপ্ত (খরচ / প্রদান)
+                        </div>
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-rose-50 text-rose-950 border-b border-rose-200 font-bold">
+                                <tr>
+                                    <th class="p-2 w-20">তারিখ</th>
+                                    <th class="p-2">খাত ও বিবরণ</th>
+                                    <th class="p-2 w-16">টাইপ</th>
+                                    <th class="p-2 text-right w-24">টাকা</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportExpenseTableBody"></tbody>
+                            <tfoot class="bg-rose-100/80 font-bold border-t border-rose-300">
+                                <tr>
+                                    <td colspan="3" class="p-2 text-right">মোট রপ্ত:</td>
+                                    <td id="reportTotalExpense" class="p-2 text-right text-rose-900">৳০</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Final Balance Summary Bar -->
+                <div class="mt-6 p-4 bg-emerald-50/60 rounded-xl border border-emerald-200 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <span class="text-xs text-gray-500 font-semibold block">পূর্বের জের (Opening Balance):</span>
+                        <span id="reportOpeningBalanceText" class="text-sm font-black text-gray-800">৳০</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 font-semibold block">সর্বমোট জমা (আমদ+জের):</span>
+                        <span id="reportGrandTotalIncomeText" class="text-sm font-black text-emerald-800">৳০</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-500 font-semibold block">অবশিষ্ট ক্যাশ স্থিতি (জের):</span>
+                        <span id="reportClosingBalanceText" class="text-sm font-black text-blue-800">৳০</span>
+                    </div>
+                </div>
+
+                <!-- Signatures -->
+                <div class="mt-16 grid grid-cols-2 gap-8 text-center pt-8 border-t border-dashed border-gray-300">
+                    <div>
+                        <div class="w-40 mx-auto border-b border-gray-800 mb-1"></div>
+                        <p class="text-xs font-bold text-gray-700">ক্যাশিয়ার / হিসাবরক্ষক</p>
+                    </div>
+                    <div>
+                        <div class="w-40 mx-auto border-b border-gray-800 mb-1"></div>
+                        <p class="text-xs font-bold text-gray-700">মুহতামিম / প্রিন্সিপাল</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: CATEGORY MANAGEMENT ==================== -->
+        <section id="sec-categories" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Add Category -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm">
+                    <h3 class="font-bold text-gray-800 text-sm mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus text-emerald-700"></i> নতুন হিসাবের খাত তৈরি করুন
+                    </h3>
+                    <form onsubmit="handleAddCategory(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">খাতের ধরন</label>
+                            <select id="newCatType" class="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-emerald-600">
+                                <option value="income">আমদ (আয়)</option>
+                                <option value="expense">রপ্ত (খরচ)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">খাতের নাম</label>
+                            <input type="text" id="newCatName" required placeholder="যেমন: নতুন দান বাক্স, গ্যাস বিল" class="w-full border border-gray-300 rounded-xl px-3.5 py-2 text-sm focus:ring-2 focus:ring-emerald-600">
+        <!-- ==================== TAB 5: SECURITY SETTINGS ==================== -->
+        <section id="sec-settings" class="hidden">
+            <div class="max-w-md mx-auto glass-card p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-200">
+                <h3 class="font-extrabold text-gray-800 text-base mb-4 flex items-center gap-2 pb-3 border-b border-gray-200">
+                    <i class="fa-solid fa-key text-emerald-700"></i> এডমিন পাসওয়ার্ড পরিবর্তন করুন
+                </h3>
+                <form onsubmit="handleChangePassword(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">বর্তমান পাসওয়ার্ড</label>
+                        <input type="password" id="currPassword" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">নতুন পাসওয়ার্ড</label>
+                        <input type="password" id="newPassword" required class="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-600">
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-md">
+                        পাসওয়ার্ড আপডেট করুন
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let currentRole = "Admin";
+        let adminAuth = { username: "admin", password: "123456" };
+        let isLoggedIn = false;
+        let transactions = [];
+        let categories = {
+            income: ["মাসিক মাহফিলের হাদিয়া", "সাধারণ অনুদান", "ছাত্র বেতন ও ভর্তি", "যাকাত ও সদকা ফান্ড", "কোরবানি চামড়া বিক্রি"],
+            expense: ["শিক্ষক ও স্টাফ বেতন", "খাবার ও মেস খরচ", "বিদ্যুৎ ও ইউটিলিটি বিল", "মাদ্রাসা মেরামত ও নির্মাণ", "বই ও লাইব্রেরি খরচ"]
+        };
+
+        let barChartInstance = null;
+        let pieChartInstance = null;
+
+        window.onload = function() {
+            loadInitialData();
+            checkLoginState();
+            setQuickDate('today');
+            updateCategoryDatalist();
+            renderDashboard();
+            renderCategoriesUI();
+            renderCashbookReport();
+        };
+
+        function checkLoginState() {
+            const savedAuth = localStorage.getItem('jamiyatus_admin_auth');
+            if (savedAuth) adminAuth = JSON.parse(savedAuth);
+
+            const session = sessionStorage.getItem('jamiyatus_is_logged_in');
+            if (session === 'true') {
+                isLoggedIn = true;
+                document.getElementById('loginModal').classList.add('hidden');
+            } else {
+                isLoggedIn = false;
+                document.getElementById('loginModal').classList.remove('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+            const errDiv = document.getElementById('loginError');
+
+            if (u === adminAuth.username && p === adminAuth.password) {
+                sessionStorage.setItem('jamiyatus_is_logged_in', 'true');
+                isLoggedIn = true;
+                document.getElementById('loginModal').classList.add('hidden');
+                errDiv.classList.add('hidden');
+                showAlert('সফলভাবে লগইন হয়েছে!');
+            } else {
+                errDiv.innerText = 'ভুল ইউজারনেম অথবা পাসওয়ার্ড!';
+                errDiv.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('jamiyatus_is_logged_in');
+            isLoggedIn = false;
+            document.getElementById('loginModal').classList.remove('hidden');
+            showAlert('লগআউট করা হয়েছে', 'error');
+        }
+
+        function handleChangePassword(e) {
+            e.preventDefault();
+            const currP = document.getElementById('currPassword').value;
+            const newP = document.getElementById('newPassword').value;
+
+            if (currP === adminAuth.password) {
+                adminAuth.password = newP;
+                localStorage.setItem('jamiyatus_admin_auth', JSON.stringify(adminAuth));
+                document.getElementById('currPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                showAlert('পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে');
+            } else {
+                showAlert('বর্তমান পাসওয়ার্ড ভুল!', 'error');
+            }
+        }
+
+        function switchTab(tabId) {
+            ['dashboard', 'entry', 'cashbook', 'categories', 'settings'].forEach(id => {
+                const sec = document.getElementById(`sec-${id}`);
+                if (sec) sec.classList.add('hidden');
+                const btn = document.getElementById(`tab-${id}`);
+                if (btn) btn.className = "tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-800";
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) activeBtn.className = "tab-btn px-5 py-2.5 rounded-xl font-bold text-sm transition flex items-center gap-2 bg-emerald-800 text-white shadow-md";
+
+            if (tabId === 'dashboard') renderDashboard();
+            if (tabId === 'cashbook') renderCashbookReport();
+        }
+
+        function setQuickDate(type) {
+            const dateInput = document.getElementById('entryDate');
+            const d = new Date();
+            if (type === 'yesterday') d.setDate(d.getDate() - 1);
+            dateInput.value = d.toISOString().split('T')[0];
+        }
+
+        function toggleCustomMethod(val) {
+            const customInput = document.getElementById('customPaymentMethod');
+            if (val === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.setAttribute('required', 'true');
+            } else {
+                customInput.classList.add('hidden');
+                customInput.removeAttribute('required');
+            }
+        }
+
+        function updateCategoryDatalist() {
+            const type = document.querySelector('input[name="entryType"]:checked').value;
+            const datalist = document.getElementById('categoryDatalist');
+            datalist.innerHTML = '';
+            categories[type].forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                datalist.appendChild(opt);
+            });
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            if (currentRole === 'Viewer') {
+                showAlert('আপনার শুধুমাত্র দেখার অনুমতি রয়েছে।', 'error');
+                return;
+            }
+
+            const type = document.querySelector('input[name="entryType"]:checked').value;
+            const category = document.getElementById('entryCategory').value.trim();
+            const rawAmount = document.getElementById('entryAmount').value;
+            const amount = parseToEnglishNum(rawAmount);
+            let date = document.getElementById('entryDate').value;
+            if (!date) date = new Date().toISOString().split('T')[0];
+
+            const isRegular = document.querySelector('input[name="isRegular"]:checked').value === 'true';
+            let method = document.getElementById('entryPaymentMethod').value;
+            if (method === 'custom') method = document.getElementById('customPaymentMethod').value.trim();
+            const desc = document.getElementById('entryDesc').value.trim();
+
+            if (amount <= 0) {
+                showAlert('অনুগ্রহ করে সঠিক টাকার পরিমাণ দিন।', 'error');
+                return;
+            }
+
+            if (!categories[type].includes(category)) {
+                categories[type].push(category);
+                saveCategories();
+                renderCategoriesUI();
+            }
+
+            const newEntry = {
+                id: Date.now(),
+                type,
+                category,
+                amount,
+                date,
+                isRegular,
+                paymentMethod: method,
+                desc
+            };
+
+            transactions.unshift(newEntry);
+            saveTransactions();
+
+            document.getElementById('entryCategory').value = '';
+            document.getElementById('entryAmount').value = '';
+            document.getElementById('entryDesc').value = '';
+            setQuickDate('today');
+
+            showAlert('হিসাব সফলভাবে সংরক্ষণ করা হয়েছে!');
+            switchTab('dashboard');
+        }
+
+        function changeRole(role) {
+            currentRole = role;
+            const submitBtn = document.getElementById('submitEntryBtn');
+            if (role === 'Viewer') {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                showAlert('রোল: পরিদর্শক (অ্যাকশন সীমাবদ্ধ)', 'error');
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                showAlert(`রোল পরিবর্তন: ${role === 'Admin' ? 'মুহতামিম / অ্যাডমিন' : 'ক্যাশিয়ার'}`);
+            }
+        }
+
+        function handleAddCategory(e) {
+            e.preventDefault();
+            const type = document.getElementById('newCatType').value;
+            const name = document.getElementById('newCatName').value.trim();
+
+            if (name && !categories[type].includes(name)) {
+                categories[type].push(name);
+                saveCategories();
+                renderCategoriesUI();
+                updateCategoryDatalist();
+                document.getElementById('newCatName').value = '';
+                showAlert('নতুন খাত যোগ করা হয়েছে');
+            }
+        }
+
+        function removeCategory(type, name) {
+            if (currentRole === 'Viewer') return;
+            categories[type] = categories[type].filter(c => c !== name);
+            saveCategories();
+            renderCategoriesUI();
+            updateCategoryDatalist();
+        }
+
+        function renderCategoriesUI() {
+            const incContainer = document.getElementById('incomeCategoriesList');
+            const expContainer = document.getElementById('expenseCategoriesList');
+
+            incContainer.innerHTML = categories.income.map(c => `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-900 rounded-xl text-xs font-bold border border-emerald-200">
+                    ${c}
+                    <button onclick="removeCategory('income', '${c}')" class="text-emerald-700 hover:text-red-600 ml-1">×</button>
+                </span>
+            `).join('');
+
+            expContainer.innerHTML = categories.expense.map(c => `
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-900 rounded-xl text-xs font-bold border border-rose-200">
+                    ${c}
+                    <button onclick="removeCategory('expense', '${c}')" class="text-rose-700 hover:text-red-600 ml-1">×</button>
+                </span>
+            `).join('');
+        }
+
+        function renderDashboard() {
+            const totalInc = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+            const totalExp = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+            const net = totalInc - totalExp;
+
+            document.getElementById('dashTotalIncome').innerText = `৳${toBangaliNum(totalInc.toLocaleString('en-IN'))}`;
+            document.getElementById('dashTotalExpense').innerText = `৳${toBangaliNum(totalExp.toLocaleString('en-IN'))}`;
+            document.getElementById('dashNetBalance').innerText = `৳${toBangaliNum(net.toLocaleString('en-IN'))}`;
+            document.getElementById('dashTotalCount').innerText = `${toBangaliNum(transactions.length)}টি`;
+
+            const recent = transactions.slice(0, 5);
+            const tbody = document.getElementById('dashRecentTable');
+            if (recent.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 font-semibold">কোন লেনদেন পাওয়া যায়নি</td></tr>`;
+            } else {
+                tbody.innerHTML = recent.map(t => `
+                    <tr class="hover:bg-gray-50/80 transition">
+                        <td class="p-3.5 font-medium">${toBangaliNum(t.date)}</td>
+                        <td class="p-3.5">
+                            <span class="px-2.5 py-1 rounded-lg text-[10px] font-extrabold ${t.type === 'income' ? 'bg-emerald-100 text-emerald-900' : 'bg-rose-100 text-rose-900'}">
+                                ${t.type === 'income' ? 'আমদ' : 'রপ্ত'}
+                            </span>
+                        </td>
+                        <td class="p-3.5">
+                            <span class="font-bold text-gray-800">${t.category}</span>
+                            ${t.desc ? `<br><span class="text-gray-500 text-[11px]">${t.desc}</span>` : ''}
+                        </td>
+                        <td class="p-3.5 text-gray-600 font-medium">${t.paymentMethod}</td>
+                        <td class="p-3.5 text-right font-black ${t.type === 'income' ? 'text-emerald-700' : 'text-rose-600'}">
+                            ৳${toBangaliNum(t.amount.toLocaleString('en-IN'))}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderCharts(totalInc, totalExp);
+        }
+
+        function renderCharts(totalInc, totalExp) {
+            const ctx1 = document.getElementById('incomeVsExpenseChart').getContext('2d');
+            const ctx2 = document.getElementById('expenseCategoryChart').getContext('2d');
+
+            if (barChartInstance) barChartInstance.destroy();
+            if (pieChartInstance) pieChartInstance.destroy();
+
+            barChartInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['আমদ (আয়)', 'রপ্ত (খরচ)'],
+                    datasets: [{
+                        label: 'টাকার পরিমাণ',
+                        data: [totalInc, totalExp],
+                        backgroundColor: ['#065f46', '#be123c'],
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const expCats = {};
+            transactions.filter(t => t.type === 'expense').forEach(t => {
+                expCats[t.category] = (expCats[t.category] || 0) + t.amount;
+            });
+
+            pieChartInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(expCats),
+                    datasets: [{
+                        data: Object.values(expCats),
+                        backgroundColor: ['#f43f5e', '#fb7185', '#fda4af', '#e11d48', '#be123c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
+                }
+            });
+        }
+
+        function renderCashbookReport() {
+            const startVal = document.getElementById('reportStartDate').value;
+            const endVal = document.getElementById('reportEndDate').value;
+
+            const dateRangeText = (startVal && endVal) 
+                ? `${toBangaliNum(startVal)} হতে ${toBangaliNum(endVal)}`
+                : 'সকল তারিখের বিবরণী';
+            document.getElementById('reportDateRangeText').innerText = `তারিখ: ${dateRangeText}`;
+
+            const openingBalance = transactions
+                .filter(t => startVal && t.date < startVal)
+                .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+
+            const filtered = transactions.filter(t => {
+                if (!t.date) return true;
+                if (startVal && t.date < startVal) return false;
+                if (endVal && t.date > endVal) return false;
+                return true;
+            });
+
+            const incomes = filtered.filter(t => t.type === 'income');
+            const expenses = filtered.filter(t => t.type === 'expense');
+
+            const incTable = document.getElementById('reportIncomeTableBody');
+            const expTable = document.getElementById('reportExpenseTableBody');
+
+            let incHTML = `
+                <tr class="bg-emerald-50/60 border-b border-emerald-100">
+                    <td class="p-2 border-r border-emerald-100 font-medium">-</td>
+                    <td class="p-2 border-r border-emerald-100 font-bold text-gray-800">পূর্বের জের (Opening Balance)</td>
+                    <td class="p-2 border-r border-emerald-100"><span class="px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded text-[10px] font-bold">নিয়মিত</span></td>
+                    <td class="p-2 text-right font-bold text-emerald-900">৳${toBangaliNum(openingBalance.toLocaleString('en-IN'))}</td>
+                </tr>
+            `;
+
+            incomes.forEach(t => {
+                incHTML += `
+                    <tr class="hover:bg-gray-50 border-b border-gray-100">
+                        <td class="p-2 border-r border-gray-100 font-medium">${toBangaliNum(t.date)}</td>
+                        <td class="p-2 border-r border-gray-100">
+                            <span class="font-bold text-gray-800">${t.category}</span>
+                            ${t.desc ? `<br><span class="text-gray-500 text-[10px]">${t.desc}</span>` : ''}
+                        </td>
+                        <td class="p-2 border-r border-gray-100">
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${t.isRegular ? 'bg-blue-100 text-blue-900' : 'bg-purple-100 text-purple-900'}">
+                                ${t.isRegular ? 'নিয়মিত' : 'অনিয়মিত'}
+                            </span>
+                        </td>
+                        <td class="p-2 text-right font-black text-emerald-800">৳${toBangaliNum(t.amount.toLocaleString('en-IN'))}</td>
+                    </tr>
+                `;
+            });
+            incTable.innerHTML = incHTML;
+
+            let expHTML = '';
+            if (expenses.length === 0) {
+                expHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-semibold">কোন খরচ নেই</td></tr>`;
+            } else {
+                expenses.forEach(t => {
+                    expHTML += `
+                        <tr class="hover:bg-gray-50 border-b border-gray-100">
+                            <td class="p-2 border-r border-gray-100 font-medium">${toBangaliNum(t.date)}</td>
+                            <td class="p-2 border-r border-gray-100">
+                                <span class="font-bold text-gray-800">${t.category}</span>
+                                ${t.desc ? `<br><span class="text-gray-500 text-[10px]">${t.desc}</span>` : ''}
+                            </td>
+                            <td class="p-2 border-r border-gray-100">
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${t.isRegular ? 'bg-blue-100 text-blue-900' : 'bg-purple-100 text-purple-900'}">
+                                    ${t.isRegular ? 'নিয়মিত' : 'অনিয়মিত'}
+                                </span>
+                            </td>
+                            <td class="p-2 text-right font-black text-rose-700">৳${toBangaliNum(t.amount.toLocaleString('en-IN'))}</td>
+                        </tr>
+                    `;
+                });
+            }
+            expTable.innerHTML = expHTML;
+
+            const totalInc = incomes.reduce((sum, t) => sum + t.amount, 0);
+            const totalExp = expenses.reduce((sum, t) => sum + t.amount, 0);
+            const grandTotalInc = openingBalance + totalInc;
+            const closingBalance = grandTotalInc - totalExp;
+
+            document.getElementById('reportTotalIncome').innerText = `৳${toBangaliNum(totalInc.toLocaleString('en-IN'))}`;
+            document.getElementById('reportTotalExpense').innerText = `৳${toBangaliNum(totalExp.toLocaleString('en-IN'))}`;
+            document.getElementById('reportOpeningBalanceText').innerText = `৳${toBangaliNum(openingBalance.toLocaleString('en-IN'))}`;
+            document.getElementById('reportGrandTotalIncomeText').innerText = `৳${toBangaliNum(grandTotalInc.toLocaleString('en-IN'))}`;
+            document.getElementById('reportClosingBalanceText').innerText = `৳${toBangaliNum(closingBalance.toLocaleString('en-IN'))}`;
+        }
+
+        function resetReportFilter() {
+            document.getElementById('reportStartDate').value = '';
+            document.getElementById('reportEndDate').value = '';
+            renderCashbookReport();
+        }
+
+        function exportCashbookPDF() {
+            window.print();
+        }
+
+        function exportCashbookWord() {
+            const startVal = document.getElementById('reportStartDate').value;
+            const endVal = document.getElementById('reportEndDate').value;
+            const dateRangeStr = (startVal && endVal) ? `${toBangaliNum(startVal)} হতে ${toBangaliNum(endVal)}` : 'সকল তারিখ';
+
+            const filtered = transactions.filter(t => {
+                if (!t.date) return true;
+                if (startVal && t.date < startVal) return false;
+                if (endVal && t.date > endVal) return false;
+                return true;
+            });
+
+            const opening = transactions
+                .filter(t => startVal && t.date < startVal)
+                .reduce((acc, t) => acc + (t.type === 'income' ? t.amount : -t.amount), 0);
+
+            const incomes = filtered.filter(t => t.type === 'income');
+            const expenses = filtered.filter(t => t.type === 'expense');
+
+            const totalInc = incomes.reduce((sum, t) => sum + t.amount, 0);
+            const totalExp = expenses.reduce((sum, t) => sum + t.amount, 0);
+            const grandInc = opening + totalInc;
+            const closing = grandInc - totalExp;
+
+            let incomeRows = `
+                <tr style="background-color: #f0fdf4;">
+                    <td style="padding:6px; border:1px solid #ccc; font-size:11px;">-</td>
+                    <td style="padding:6px; border:1px solid #ccc; font-size:11px; font-weight:bold;">পূর্বের জের (Opening Balance)</td>
+                    <td style="padding:6px; border:1px solid #ccc; font-size:10px;">নিয়মিত</td>
+                    <td style="padding:6px; border:1px solid #ccc; font-size:11px; text-align:right; font-weight:bold;">৳${toBangaliNum(opening)}</td>
+                </tr>`;
+            
+            incomes.forEach(t => {
+                incomeRows += `
+                    <tr>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:11px;">${toBangaliNum(t.date || '')}</td>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:11px;"><b>${t.category}</b>${t.desc ? '<br><small style="color:#666;">' + t.desc + '</small>' : ''}</td>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:10px;">${t.isRegular ? 'নিয়মিত' : 'অনিয়মিত'}</td>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:11px; text-align:right;">৳${toBangaliNum(t.amount)}</td>
+                    </tr>`;
+            });
+
+            let expenseRows = '';
+            expenses.forEach(t => {
+                expenseRows += `
+                    <tr>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:11px;">${toBangaliNum(t.date || '')}</td>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:11px;"><b>${t.category}</b>${t.desc ? '<br><small style="color:#666;">' + t.desc + '</small>' : ''}</td>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:10px;">${t.isRegular ? 'নিয়মিত' : 'অনিয়মিত'}</td>
+                        <td style="padding:6px; border:1px solid #ccc; font-size:11px; text-align:right;">৳${toBangaliNum(t.amount)}</td>
+                    </tr>`;
+            });
+
+            const wordHTML = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset="utf-8">
+                    <title>ক্যাশবই রিপোর্ট</title>
+                    <style>
+                        body { font-family: 'Arial', sans-serif; margin: 20px; color: #333; }
+                        .header { text-align: center; margin-bottom: 20px; }
+                        .header h2 { margin: 2px 0; color: #022c22; font-size: 20px; }
+                        .header p { margin: 2px 0; font-size: 12px; color: #555; }
+                        .date-badge { display: inline-block; background-color: #ecfdf5; color: #065f46; padding: 4px 10px; border-radius: 12px; font-size: 11px; border: 1px solid #a7f3d0; margin-top: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                        th { background-color: #f3f4f6; padding: 6px; border: 1px solid #ccc; font-size: 11px; text-align: left; }
+                        .th-inc { background-color: #065f46; color: white; text-align: center; font-size: 13px; padding: 8px; }
+                        .th-exp { background-color: #9f1239; color: white; text-align: center; font-size: 13px; padding: 8px; }
+                        .summary-table td { padding: 8px; border: 1px solid #ddd; text-align: center; font-size: 12px; }
+                        .footer-sig { margin-top: 50px; width: 100%; }
+                        .footer-sig td { text-align: center; width: 50%; vertical-align: bottom; }
+                        .sig-line { width: 180px; border-top: 1px solid #333; margin: 0 auto 5px auto; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <p style="font-family: serif; font-size: 12px;">বিসমিল্লাহির রহমানির রহিম</p>
+                        <h2>জামিয়াতুস সুন্নাহ আদর্শ মহিলা মাদরাসা</h2>
+                        <p>রুহিতপুর, কেরাণীগঞ্জ, ঢাকা</p>
+                        <p><b>দৈনিক ক্যাশবই হিসাব বিবরণী</b></p>
+                        <div class="date-badge">তারিখ: ${dateRangeStr}</div>
+                    </div>
+
+                    <table style="width: 100%; border: none;">
+                        <tr style="vertical-align: top;">
+                            <td style="width: 49%; padding-right: 1%;">
+                                <table>
+                                    <thead>
+                                        <tr><th colspan="4" class="th-inc">আমদ (জমা / প্রাপ্তি)</th></tr>
+                                        <tr>
+                                            <th style="width:20%;">তারিখ</th>
+                                            <th>খাত ও বিবরণ</th>
+                                            <th style="width:18%;">টাইপ</th>
+                                            <th style="width:22%; text-align:right;">টাকা</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${incomeRows}</tbody>
+                                    <tfoot>
+                                        <tr style="background-color: #d1fae5; font-weight: bold;">
+                                            <td colspan="3" style="padding:6px; border:1px solid #ccc; text-align:right;">মোট আমদ:</td>
+                                            <td style="padding:6px; border:1px solid #ccc; text-align:right; color: #065f46;">৳${toBangaliNum(totalInc)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </td>
+
+                            <td style="width: 49%; padding-left: 1%;">
+                                <table>
+                                    <thead>
+                                        <tr><th colspan="4" class="th-exp">রপ্ত (খরচ / প্রদান)</th></tr>
+                                        <tr>
+                                            <th style="width:20%;">তারিখ</th>
+                                            <th>খাত ও বিবরণ</th>
+                                            <th style="width:18%;">টাইপ</th>
+                                            <th style="width:22%; text-align:right;">টাকা</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>${expenseRows || '<tr><td colspan="4" style="text-align:center; padding:10px; color:#888;">কোন খরচ নেই</td></tr>'}</tbody>
+                                    <tfoot>
+                                        <tr style="background-color: #ffe4e6; font-weight: bold;">
+                                            <td colspan="3" style="padding:6px; border:1px solid #ccc; text-align:right;">মোট রপ্ত:</td>
+                                            <td style="padding:6px; border:1px solid #ccc; text-align:right; color: #9f1239;">৳${toBangaliNum(totalExp)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table class="summary-table" style="background-color: #f9fafb; margin-top: 15px;">
+                        <tr>
+                            <td><b>পূর্বের জের:</b><br>৳${toBangaliNum(opening)}</td>
+                            <td><b>সর্বমোট জমা:</b><br><span style="color: #065f46;">৳${toBangaliNum(grandInc)}</span></td>
+                            <td><b>অবশিষ্ট জের:</b><br><span style="color: #1d4ed8;">৳${toBangaliNum(closing)}</span></td>
+                        </tr>
+                    </table>
+
+                    <table class="footer-sig">
+                        <tr>
+                            <td>
+                                <div class="sig-line"></div>
+                                <b>ক্যাশিয়ার / হিসাবরক্ষক</b>
+                            </td>
+                            <td>
+                                <div class="sig-line"></div>
+                                <b>মুহতামিম / প্রিন্সিপাল</b>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(['\ufeff', wordHTML], { type: 'application/msword' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Jamiyatus_Cashbook_${startVal || 'all'}_to_${endVal || 'all'}.doc`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
